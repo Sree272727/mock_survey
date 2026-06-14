@@ -801,6 +801,104 @@ def list_pathways(db: Session = Depends(get_db)) -> list[dict]:
     return [{"slug": p.slug, "title": p.title, "is_active": p.is_active} for p in pathways]
 
 
+@app.get("/api/lms/trainings")
+def list_lms_trainings(db: Session = Depends(get_db)) -> list[dict]:
+    """LMS catalog: one training per unique F-tag citable across all pathways.
+    `recommended=True` when that tag has actually been cited in a survey."""
+    # Tags that appear in any pathway's add_citation rules (the catalog).
+    catalog_tags: set[str] = set()
+    rule_actions = db.scalars(
+        select(models.RuleAction).where(models.RuleAction.action_type == "add_citation")
+    ).all()
+    for ra in rule_actions:
+        tag = str((ra.payload or {}).get("tag", "")).strip()
+        if tag:
+            catalog_tags.add(tag)
+
+    # Tags actually cited in surveys → recommended.
+    cited_tags = {str(t).strip() for t in db.scalars(select(models.CaseCitation.tag)).all() if str(t).strip()}
+    # Include cited tags even if a rule wasn't found (defensive).
+    catalog_tags |= cited_tags
+    catalog_tags = {t for t in catalog_tags if t.strip()}
+
+    # Reverse map tag -> compliance area for category/regulation.
+    tag_area: dict[str, tuple[str, str]] = {}
+    for area, info in COMPLIANCE_AREAS.items():
+        for t in info["tags"]:
+            tag_area[t] = (area, info["regulation"])
+
+    FORMATS = ["Online module", "Video + Knowledge Check", "Interactive scenario", "Recorded webinar"]
+    LEVELS = ["Foundational", "Intermediate", "Advanced"]
+
+    out: list[dict] = []
+    for tag in sorted(catalog_tags):
+        meta = F_TAG_METADATA.get(tag, {})
+        area, regulation = tag_area.get(tag, ("General Compliance", meta.get("regulation", "§483")))
+        title = meta.get("title", "Regulatory Compliance")
+        severity = meta.get("scope_severity", "")
+        # Deterministic mock LMS metadata from the tag digits (stable per tag).
+        digits = "".join(ch for ch in tag if ch.isdigit())
+        seed = int(digits) if digits else 0
+        out.append(
+            {
+                "f_tag": tag,
+                "title": title,
+                "category": area,
+                "regulation": regulation,
+                "severity": severity,
+                "recommended": tag in cited_tags,
+                "duration_min": 30 + (seed % 4) * 15,
+                "format": FORMATS[seed % len(FORMATS)],
+                "level": "Advanced" if severity.startswith(("G", "H", "I", "J")) else LEVELS[seed % 2],
+                "modules": 3 + (seed % 4),
+                "description": (
+                    f"Best-practice training to prevent {tag} ({title}) deficiencies under {regulation}. "
+                    "Covers root causes, surveyor expectations, documentation, and corrective actions."
+                ),
+            }
+        )
+    return out
+
+
+@app.post("/api/cases/{case_id}/pathways/{slug}")
+def attach_case_pathway(case_id: UUID, slug: str, db: Session = Depends(get_db)) -> dict:
+    """Attach a pathway to a case if not already attached (idempotent).
+    Used when a survey triggers another CEP that wasn't part of the original
+    selection, so the triggered pathway can be opened and answered."""
+    case = db.get(models.Case, case_id)
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+    pathway = get_pathway_by_slug(db, slug)
+    existing = db.scalar(
+        select(models.CasePathway)
+        .where(models.CasePathway.case_id == case_id)
+        .where(models.CasePathway.pathway_id == pathway.id)
+    )
+    if existing:
+        return {"ok": True, "already_attached": True}
+    max_order = db.scalar(
+        select(func.max(models.CasePathway.display_order)).where(models.CasePathway.case_id == case_id)
+    )
+    start_node = db.scalar(
+        select(models.Node)
+        .join(models.Section, models.Section.id == models.Node.section_id)
+        .where(models.Section.pathway_id == pathway.id)
+        .where(models.Node.is_start.is_(True))
+    )
+    db.add(
+        models.CasePathway(
+            case_id=case_id,
+            pathway_id=pathway.id,
+            current_node_id=start_node.id if start_node else None,
+            status="not_started",
+            display_order=(max_order if max_order is not None else -1) + 1,
+        )
+    )
+    db.add(models.CaseEvent(case_id=case_id, event_type="pathway_attached", payload={"pathway": slug}))
+    db.commit()
+    return {"ok": True, "already_attached": False}
+
+
 @app.get("/api/cases/{case_id}/pathways")
 def list_case_pathways(case_id: UUID, db: Session = Depends(get_db)) -> list[dict]:
     """The pathways attached to this survey, in order, with per-pathway status.
@@ -812,7 +910,7 @@ def list_case_pathways(case_id: UUID, db: Session = Depends(get_db)) -> list[dic
         select(models.CasePathway.status, models.Pathway.slug, models.Pathway.title)
         .join(models.Pathway, models.Pathway.id == models.CasePathway.pathway_id)
         .where(models.CasePathway.case_id == case_id)
-        .order_by(models.Pathway.id.asc())
+        .order_by(models.CasePathway.display_order.asc(), models.Pathway.id.asc())
     ).all()
     return [{"slug": slug, "title": title, "status": status} for status, slug, title in rows]
 
@@ -921,13 +1019,16 @@ def create_case(payload: schemas.CaseCreateIn, db: Session = Depends(get_db)):
     db.add(case)
     db.flush()
 
-    pathways = db.scalars(
+    active = db.scalars(
         select(models.Pathway).where(models.Pathway.is_active.is_(True)).order_by(models.Pathway.id.asc())
     ).all()
     if payload.pathway_slugs:
-        chosen = set(payload.pathway_slugs)
-        pathways = [p for p in pathways if p.slug in chosen]
-    for pathway in pathways:
+        # Honor the surveyor's selection ORDER, not the database id order.
+        by_slug = {p.slug: p for p in active}
+        pathways = [by_slug[s] for s in payload.pathway_slugs if s in by_slug]
+    else:
+        pathways = list(active)
+    for order, pathway in enumerate(pathways):
         start_node = db.scalar(
             select(models.Node)
             .join(models.Section, models.Section.id == models.Node.section_id)
@@ -940,6 +1041,7 @@ def create_case(payload: schemas.CaseCreateIn, db: Session = Depends(get_db)):
                 pathway_id=pathway.id,
                 current_node_id=start_node.id if start_node else None,
                 status="not_started",
+                display_order=order,
             )
         )
 

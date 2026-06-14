@@ -94,6 +94,7 @@ class CasePathway(Base):
     pathway_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("pathway.id", ondelete="CASCADE"), nullable=False)
     current_node_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("node.id", ondelete="SET NULL"), nullable=True)
     status: Mapped[str] = mapped_column(String(30), default="not_started", nullable=False)
+    display_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 

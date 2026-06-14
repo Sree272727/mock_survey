@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { ArrowLeft, ChevronRight, GitBranch, Loader2, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getCasePathwaySnapshot, getPathway, submitAnswer } from "@/api";
+import { attachCasePathway, getCasePathwaySnapshot, getPathway, submitAnswer } from "@/api";
 import type { CasePathwaySnapshot, Node, PathwayDefinition } from "@/types";
 
 /* ------------------------------------------------------------------ */
@@ -108,6 +108,9 @@ function ModalPathwayRunner({
   const [lastEffects, setLastEffects] = useState<string[]>([]);
 
   const refresh = useCallback(async () => {
+    // Ensure the triggered pathway is part of this case before loading it
+    // (it may not have been selected when the survey was created).
+    await attachCasePathway(caseId, slug).catch(() => {});
     const [def, snap] = await Promise.all([
       getPathway(slug),
       getCasePathwaySnapshot(caseId, slug),

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
+import { Trash2, Loader2, GraduationCap } from "lucide-react";
 
 import { PathwayTriggerModal } from "./components/PathwayTriggerModal";
 import {
@@ -44,6 +45,7 @@ import AppShell from "./layouts/AppShell";
 import FacilitiesPage from "./pages/FacilitiesPage";
 import UsersPage from "./pages/UsersPage";
 import QuestionLibraryPage from "./pages/QuestionLibraryPage";
+import TrainingsPage from "./pages/TrainingsPage";
 import TemplatesPage from "./pages/TemplatesPage";
 import PathwaysPage from "./pages/PathwaysPage";
 import LandingPage from "./pages/LandingPage";
@@ -768,6 +770,26 @@ function SurveyHistory({
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
   const paginatedRows = filteredRows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  async function handleDeleteSurvey(e: React.MouseEvent, row: CaseRecord, label: string) {
+    e.stopPropagation();
+    if (!window.confirm(`Delete survey "${label}"? This permanently removes it and all of its answers, flags, and citations. This cannot be undone.`)) {
+      return;
+    }
+    try {
+      setDeletingId(row.id);
+      await deleteCase(row.id);
+      if (caseId === row.id) setCaseId(null);
+      await refreshRows();
+      showToast("Survey deleted");
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   async function downloadReport(targetCaseId: string) {
     try {
       const blob = await downloadCaseReportPdf(targetCaseId);
@@ -919,40 +941,54 @@ function SurveyHistory({
                       </TableCell>
                       <TableCell className="py-4 px-5 text-sm text-foreground">{formatDate(row.created_at)}</TableCell>
                       <TableCell className="py-4 px-5 text-right">
-                        {isCompleted ? (
-                          <Button
-                            size="sm"
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white w-[90px]"
-                            onClick={() => {
-                              setCaseId(row.id);
-                              navigate("/app/summary");
-                            }}
+                        <div className="flex items-center justify-end gap-2">
+                          {isCompleted ? (
+                            <Button
+                              size="sm"
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white w-[90px]"
+                              onClick={() => {
+                                setCaseId(row.id);
+                                navigate("/app/summary");
+                              }}
+                            >
+                              Summary
+                            </Button>
+                          ) : isNew ? (
+                            <Button
+                              size="sm"
+                              className="bg-amber-500 hover:bg-amber-600 text-white w-[90px]"
+                              onClick={() => {
+                                setCaseId(row.id);
+                                navigate("/app/dashboard");
+                              }}
+                            >
+                              Start
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              className="w-[90px]"
+                              onClick={() => {
+                                setCaseId(row.id);
+                                navigate("/app/dashboard");
+                              }}
+                            >
+                              Continue
+                            </Button>
+                          )}
+                          <button
+                            title="Delete survey"
+                            disabled={deletingId === row.id}
+                            onClick={(e) => void handleDeleteSurvey(e, row, displayName)}
+                            className="h-8 w-8 inline-flex items-center justify-center rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition disabled:opacity-50"
                           >
-                            Summary
-                          </Button>
-                        ) : isNew ? (
-                          <Button
-                            size="sm"
-                            className="bg-amber-500 hover:bg-amber-600 text-white w-[90px]"
-                            onClick={() => {
-                              setCaseId(row.id);
-                              navigate("/app/dashboard");
-                            }}
-                          >
-                            Start
-                          </Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            className="w-[90px]"
-                            onClick={() => {
-                              setCaseId(row.id);
-                              navigate("/app/dashboard");
-                            }}
-                          >
-                            Continue
-                          </Button>
-                        )}
+                            {deletingId === row.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
@@ -1077,6 +1113,12 @@ function PathwayScreen({
   // Triggered-CEP pop-up flow
   const [triggerBanner, setTriggerBanner] = useState<{ message: string; slug: string | null; targetCode?: string } | null>(null);
   const [popup, setPopup] = useState<{ slug: string; targetCode?: string } | null>(null);
+  // The survey's chosen pathways (to compute the correct "next" pathway)
+  const [casePathways, setCasePathways] = useState<CasePathwayItem[]>([]);
+  useEffect(() => {
+    if (!caseId) { setCasePathways([]); return; }
+    getCasePathways(caseId).then(setCasePathways).catch(() => setCasePathways([]));
+  }, [caseId]);
 
   useEffect(() => {
     if (lastStep?.recommendation) {
@@ -1469,15 +1511,13 @@ function PathwayScreen({
   const navigate = useNavigate();
 
   // Determine next pathway route for "Save & Continue"
-  const nextRoute = pathwaySlug === "general-cep" ? "/app/neglect"
-    : pathwaySlug === "neglect-cep" ? "/app/infection"
-    : pathwaySlug === "infection-control-cep" ? "/app/summary"
-    : "/app/summary";
-
-  const nextLabel = pathwaySlug === "general-cep" ? "Neglect CEP"
-    : pathwaySlug === "neglect-cep" ? "Infection Control"
-    : pathwaySlug === "infection-control-cep" ? "Summary"
-    : "Summary";
+  // "Next" follows the survey's actual chosen pathway order; last → Summary.
+  const currentIdx = casePathways.findIndex((p) => p.slug === pathwaySlug);
+  const nextPathway = currentIdx >= 0 && currentIdx < casePathways.length - 1
+    ? casePathways[currentIdx + 1]
+    : null;
+  const nextRoute = nextPathway ? `/app/pathway/${nextPathway.slug}` : "/app/summary";
+  const nextLabel = nextPathway ? nextPathway.title : "Summary";
 
   // Helper: get validation issues for a specific node
   function getNodeIssues(nodeId: string): ValidationIssue[] {
@@ -2026,7 +2066,23 @@ function PathwayScreen({
                               Follow-up
                             </span>
                           )}
-                          <p className={`text-[13px] font-medium leading-relaxed ${isSubQuestion ? "text-gray-700" : "text-foreground"}`}>{node.prompt}</p>
+                          <div className="flex items-start gap-2 flex-wrap">
+                            <p className={`text-[13px] font-medium leading-relaxed ${isSubQuestion ? "text-gray-700" : "text-foreground"}`}>{node.prompt}</p>
+                            {(node.rules ?? [])
+                              .flatMap((r) => r.actions ?? [])
+                              .filter((a) => a.type === "add_citation")
+                              .map((a) => String((a.payload as Record<string, unknown>)?.tag || ""))
+                              .filter(Boolean)
+                              .map((tag) => (
+                                <span
+                                  key={tag}
+                                  title="Citation if answered No"
+                                  className="text-[10px] font-mono font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded shrink-0 mt-0.5"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                          </div>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           {hasBranching && (
@@ -2079,6 +2135,32 @@ function PathwayScreen({
                           </button>
                         ))}
                       </div>
+
+                      {/* What this answer triggered (branching feedback) */}
+                      {isAnswered && (() => {
+                        const fired = (node.rules ?? [])
+                          .filter((r) => r.when_choice === answer?.choice_label)
+                          .flatMap((r) => r.actions ?? []);
+                        if (fired.length === 0) return null;
+                        return (
+                          <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
+                            <span className="text-[10px] text-gray-400 uppercase tracking-wide mr-0.5">Triggered:</span>
+                            {fired.map((a, i) => {
+                              const p = (a.payload ?? {}) as Record<string, unknown>;
+                              let label = a.type;
+                              let cls = "bg-gray-50 text-gray-600 border-gray-200";
+                              if (a.type === "add_flag") { label = `⚑ Flag: ${String(p.code || "raised")}`; cls = "bg-orange-50 text-orange-700 border-orange-200"; }
+                              else if (a.type === "add_citation") { label = `§ Cite ${String(p.tag || "(no F-tag set)")}`; cls = "bg-amber-50 text-amber-700 border-amber-200"; }
+                              else if (a.type === "recommend_pathway") { label = `→ Recommends ${String(p.pathway_slug || p.slug || "another CEP")}`; cls = "bg-purple-50 text-purple-700 border-purple-200"; }
+                              else if (a.type === "goto_question") { const tp = String(p.pathway_slug || ""); label = tp && tp !== pathwaySlug ? `→ Jump to ${tp}` : `↓ Skip to ${String(p.target_node_code || "?")}`; cls = "bg-indigo-50 text-indigo-700 border-indigo-200"; }
+                              else if (a.type === "show_section") { label = `Reveals: ${String(p.section_slug || "(no section set)")}`; cls = "bg-blue-50 text-blue-700 border-blue-200"; }
+                              else if (a.type === "require_evidence_min") { label = "Evidence required"; cls = "bg-teal-50 text-teal-700 border-teal-200"; }
+                              else if (a.type === "require_note") { label = "Note required"; cls = "bg-teal-50 text-teal-700 border-teal-200"; }
+                              return <span key={i} className={`text-[10px] px-2 py-0.5 rounded border ${cls}`}>{label}</span>;
+                            })}
+                          </div>
+                        );
+                      })()}
 
                       {/* Compact notes + evidence */}
                       <div className="grid grid-cols-2 gap-3 mt-3">
@@ -2451,6 +2533,27 @@ function Summary({ caseId }: { caseId: string | null }) {
           )}
         </div>
       </div>
+
+      {/* ── Recommended Training CTA (LMS link) ── */}
+      {(summary?.total_citations ?? 0) > 0 && (
+        <div className="bg-gradient-to-br from-[#0077b6]/5 to-purple-50 rounded-xl border border-[#0077b6]/20 shadow-sm p-5 flex items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <span className="shrink-0 w-10 h-10 rounded-lg bg-[#0077b6]/10 text-[#0077b6] flex items-center justify-center">
+              <GraduationCap className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="text-[14px] font-bold text-foreground">Recommended training based on this survey</p>
+              <p className="text-[12px] text-muted-foreground mt-0.5">
+                {summary?.total_citations} deficiency citation{(summary?.total_citations ?? 0) !== 1 ? "s" : ""} found.
+                Targeted training is now recommended to help prevent repeat findings.
+              </p>
+            </div>
+          </div>
+          <Button className="shrink-0 bg-[#0077b6] hover:bg-[#005f8a] text-white gap-1.5" onClick={() => navigate("/app/trainings")}>
+            <GraduationCap className="h-4 w-4" /> View Recommended Training
+          </Button>
+        </div>
+      )}
 
       {/* ── Citation Details ── */}
       <div className="bg-white rounded-xl border border-gray-200/60 shadow-sm overflow-hidden">
@@ -2988,6 +3091,7 @@ export default function App() {
           <Route path="history" element={<Navigate to="/app" replace />} />
           <Route path="admin/facilities" element={<FacilitiesPage />} />
           <Route path="admin/users" element={<UsersPage />} />
+          <Route path="trainings" element={<TrainingsPage />} />
           <Route path="admin/questions" element={<QuestionLibraryPage />} />
           <Route path="admin/pathways" element={<PathwaysPage />} />
           <Route path="admin/templates" element={<TemplatesPage />} />

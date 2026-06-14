@@ -61,6 +61,28 @@ export function getCasePathways(caseId: string): Promise<CasePathwayItem[]> {
   return request<CasePathwayItem[]>(`/api/cases/${caseId}/pathways`);
 }
 
+export function attachCasePathway(caseId: string, slug: string): Promise<{ ok: boolean }> {
+  return request<{ ok: boolean }>(`/api/cases/${caseId}/pathways/${slug}`, { method: "POST" });
+}
+
+export type LmsTraining = {
+  f_tag: string;
+  title: string;
+  category: string;
+  regulation: string;
+  severity: string;
+  recommended: boolean;
+  duration_min: number;
+  format: string;
+  level: string;
+  modules: number;
+  description: string;
+};
+
+export function getLmsTrainings(): Promise<LmsTraining[]> {
+  return request<LmsTraining[]>("/api/lms/trainings");
+}
+
 export function getCase(caseId: string): Promise<CaseRecord> {
   return request<CaseRecord>(`/api/cases/${caseId}`);
 }

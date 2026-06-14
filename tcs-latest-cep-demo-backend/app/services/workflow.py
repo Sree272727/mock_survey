@@ -318,7 +318,9 @@ def evaluate_answer(
                 )
                 response["flags_created"].append(code)
         elif action.action_type == "add_citation":
-            tag = payload.get("tag", "F000")
+            tag = str(payload.get("tag", "") or "").strip()
+            if not tag:
+                continue  # misconfigured rule with no F-tag — skip (no junk citation)
             rationale = payload.get("rationale", "Auto citation")
             existing_citation = db.scalar(
                 select(models.CaseCitation)

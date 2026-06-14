@@ -30,6 +30,7 @@ import {
   FileCode2,
   Lock,
   CheckCircle2,
+  GraduationCap,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -49,6 +50,7 @@ type NavItem = {
 const customerTopItems: NavItem[] = [
   { label: "Compliance Dashboard", to: "/app/dashboard-overview", icon: BarChart3 },
   { label: "Surveys", to: "/app", end: true, icon: ClipboardList },
+  { label: "Trainings", to: "/app/trainings", icon: GraduationCap },
   { label: "Facilities", to: "/app/admin/facilities", icon: Building2 },
   { label: "Users", to: "/app/admin/users", icon: Users },
 ];
