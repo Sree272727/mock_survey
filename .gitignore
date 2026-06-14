@@ -1,0 +1,22 @@
+# OS / editor
+.DS_Store
+
+# Secrets & local env (defense-in-depth; subfolders also ignore these)
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Python
+**/.venv/
+**/venv/
+**/__pycache__/
+*.py[cod]
+
+# Node
+**/node_modules/
+**/dist/
+*.tsbuildinfo
+
+# Runtime uploads (evidence files created while testing)
+tcs-latest-cep-demo-backend/uploads/

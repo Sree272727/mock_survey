@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: cms_survey_postgres
+    environment:
+      POSTGRES_DB: cms_survey
+      POSTGRES_USER: cms_user
+      POSTGRES_PASSWORD: cms_pass
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cms_user -d cms_survey"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+    container_name: cms_survey_backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://cms_user:cms_pass@postgres:5432/cms_survey
+      CORS_ORIGINS: http://localhost:5173
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

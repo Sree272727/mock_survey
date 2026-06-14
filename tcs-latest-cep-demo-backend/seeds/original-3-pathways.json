@@ -1,0 +1,1291 @@
+{
+  "pathways": [
+    {
+      "slug": "general-cep",
+      "title": "General Critical Element Pathway",
+      "is_active": true,
+      "sections": [
+        {
+          "slug": "observations",
+          "title": "Observations Across Various Shifts",
+          "nodes": [
+            {
+              "code": "gen_obs_1",
+              "prompt": "Does staff consistently implement the care-planned interventions?",
+              "node_type": "question",
+              "parent_node_code": null,
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "GEN_OBS_CARE_IMPL_FAILURE",
+                        "message": "Care-planned interventions may not be consistently implemented.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "gen_obs_1_a",
+              "prompt": "Were the deviations from the care plan observed across multiple staff members or shifts?",
+              "node_type": "question",
+              "parent_node_code": "gen_obs_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "Yes",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "GEN_OBS_MULTI_STAFF",
+                        "message": "Deviations observed across multiple staff members or shifts \u2014 potential systemic concern.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "gen_obs_1_b",
+              "prompt": "Were there system-level factors (e.g., staffing shortages, inadequate training) contributing to the inconsistency?",
+              "node_type": "question",
+              "parent_node_code": "gen_obs_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "Yes",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "GEN_OBS_SYSTEM_FACTORS",
+                        "message": "System-level factors (staffing, training) contributing to care inconsistency.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "gen_obs_2",
+              "prompt": "Do observations of the resident match the assessment?",
+              "node_type": "question",
+              "parent_node_code": null,
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "GEN_OBS_ASSESSMENT_INCONSISTENCY",
+                        "message": "Observed resident condition may not match documented assessment.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "gen_obs_2_a",
+              "prompt": "Were the discrepancies between observations and the assessment documented and communicated to the care team?",
+              "node_type": "question",
+              "parent_node_code": "gen_obs_2",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "GEN_OBS_NOT_COMMUNICATED",
+                        "message": "Discrepancies not documented or communicated to the care team.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "gen_obs_2_b",
+              "prompt": "Did the discrepancy indicate a change in the resident's condition that required reassessment?",
+              "node_type": "question",
+              "parent_node_code": "gen_obs_2",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "Yes",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "GEN_OBS_CONDITION_CHANGE",
+                        "message": "Discrepancy indicates a change in resident condition requiring reassessment.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "slug": "records",
+          "title": "Record Review",
+          "nodes": [
+            {
+              "code": "gen_rec_1",
+              "prompt": "Were required assessments (comprehensive or significant change) completed timely?",
+              "node_type": "question",
+              "parent_node_code": null,
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "GEN_REC_ASSESSMENT_TIMELINESS",
+                        "message": "Potential F636/F637 concern: required assessments may not be timely.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "gen_rec_1_a",
+              "prompt": "Was the delay in completing assessments a pattern affecting other residents as well?",
+              "node_type": "question",
+              "parent_node_code": "gen_rec_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "Yes",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "GEN_REC_PATTERN_DELAY",
+                        "message": "Assessment delays appear to be a pattern affecting other residents.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "gen_rec_1_b",
+              "prompt": "Did the untimely assessment result in missed changes to the resident's condition or care needs?",
+              "node_type": "question",
+              "parent_node_code": "gen_rec_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "Yes",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "GEN_REC_MISSED_CHANGES",
+                        "message": "Untimely assessment resulted in missed changes to resident condition.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "gen_rec_2",
+              "prompt": "Was a resident-specific care plan developed and revised when necessary?",
+              "node_type": "question",
+              "parent_node_code": null,
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "GEN_REC_CAREPLAN_REVISION",
+                        "message": "Potential F656/F657 concern: care plan may not be developed/revised as needed.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "gen_rec_2_a",
+              "prompt": "Were the deficiencies in the care plan related to specific care areas (e.g., nutrition, mobility, medications)?",
+              "node_type": "question",
+              "parent_node_code": "gen_rec_2",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": []
+            },
+            {
+              "code": "gen_rec_2_b",
+              "prompt": "Did the lack of an updated care plan result in staff using outdated or incorrect interventions?",
+              "node_type": "question",
+              "parent_node_code": "gen_rec_2",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "Yes",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "GEN_REC_OUTDATED_INTERVENTIONS",
+                        "message": "Staff may be using outdated or incorrect interventions due to care plan gaps.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "slug": "harm",
+          "title": "Harm Determination",
+          "nodes": [
+            {
+              "code": "gen_harm_1",
+              "prompt": "Did the failure result in actual harm or potential for harm?",
+              "node_type": "question",
+              "parent_node_code": null,
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "Yes",
+                  "actions": [
+                    {
+                      "type": "recommend_pathway",
+                      "payload": {
+                        "message": "Failure detected with harm/potential harm. Recommend opening Neglect CEP.",
+                        "pathway_slug": "neglect-cep"
+                      }
+                    },
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "GEN_HARM_YES_ESCALATE",
+                        "message": "Harm or potential for harm identified. Escalation review recommended.",
+                        "severity": "high"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "GEN_HARM_NO_REVIEW",
+                        "message": "No harm confirmed, but review findings and determine if escalation is still needed.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "gen_harm_1_a",
+              "prompt": "Were any preventive measures already in place that mitigated the risk of harm?",
+              "node_type": "question",
+              "parent_node_code": "gen_harm_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": []
+            },
+            {
+              "code": "gen_harm_1_b",
+              "prompt": "Is there potential for future harm if the identified failure is not corrected?",
+              "node_type": "question",
+              "parent_node_code": "gen_harm_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "Yes",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "GEN_HARM_FUTURE_RISK",
+                        "message": "Potential for future harm if identified failure is not corrected.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "slug": "decisions",
+          "title": "Critical Element Decisions",
+          "nodes": [
+            {
+              "code": "gen_dec_1",
+              "prompt": "Did the facility ensure the resident received treatment and care in accordance with professional standards of practice and the care plan?",
+              "node_type": "decision",
+              "parent_node_code": null,
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_citation",
+                      "payload": {
+                        "tag": "F684",
+                        "rationale": "Facility failed to ensure treatment and care were provided according to professional standards and the care plan."
+                      }
+                    },
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "GEN_DEC_1_NO",
+                        "message": "General Decision #1 answered No",
+                        "severity": "high"
+                      }
+                    },
+                    {
+                      "type": "require_evidence_min",
+                      "payload": {
+                        "min": 1,
+                        "code": "GEN_DEC_1_EVIDENCE_MIN",
+                        "message": "Please attach at least 1 evidence item for General Decision #1.",
+                        "severity": "warn"
+                      }
+                    },
+                    {
+                      "type": "require_note",
+                      "payload": {
+                        "code": "GEN_DEC_1_NOTE_REQUIRED",
+                        "message": "Please add a note with at least 20 characters for General Decision #1.",
+                        "severity": "warn",
+                        "min_length": 20
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "gen_dec_1_a",
+              "prompt": "Were the failures due to knowledge deficits, systemic issues, or individual staff performance?",
+              "node_type": "question",
+              "parent_node_code": "gen_dec_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": []
+            },
+            {
+              "code": "gen_dec_1_b",
+              "prompt": "Has the facility demonstrated awareness of the deficiency and initiated any corrective actions?",
+              "node_type": "question",
+              "parent_node_code": "gen_dec_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "GEN_DEC_NO_CORRECTIVE",
+                        "message": "Facility has not demonstrated awareness or initiated corrective actions.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "neglect-cep",
+      "title": "Neglect Critical Element Pathway",
+      "is_active": true,
+      "sections": [
+        {
+          "slug": "interviews",
+          "title": "Interviews with Staff Working During the Time the Alleged Neglect Occurred",
+          "nodes": [
+            {
+              "code": "neg_int_1",
+              "prompt": "Was the resident not receiving necessary care and services?",
+              "node_type": "question",
+              "parent_node_code": null,
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "NEG_ENTRY_NOT_CONFIRMED",
+                        "message": "Neglect criteria not confirmed based on interview evidence.",
+                        "severity": "warn"
+                      }
+                    },
+                    {
+                      "type": "recommend_pathway",
+                      "payload": {
+                        "message": "Neglect criteria not confirmed. Continue evaluation in General CEP.",
+                        "pathway_slug": "general-cep"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "neg_int_1_a",
+              "prompt": "Did staff interviews indicate awareness of the resident's care needs and service requirements?",
+              "node_type": "question",
+              "parent_node_code": "neg_int_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "NEG_INT_UNAWARE",
+                        "message": "Staff interviews did not indicate awareness of resident care needs.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "neg_int_1_b",
+              "prompt": "Were there inconsistencies between staff accounts and documented care records?",
+              "node_type": "question",
+              "parent_node_code": "neg_int_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "Yes",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "NEG_INT_INCONSISTENCIES",
+                        "message": "Inconsistencies found between staff accounts and documented care records.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "slug": "records",
+          "title": "Record Review",
+          "nodes": [
+            {
+              "code": "neg_rec_1",
+              "prompt": "Did the facility report the alleged neglect to required authorities within mandated timeframes?",
+              "node_type": "question",
+              "parent_node_code": null,
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_citation",
+                      "payload": {
+                        "tag": "F609",
+                        "rationale": "Facility did not report alleged neglect to required authorities within mandated timeframes."
+                      }
+                    },
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "NEG_REPORTING_VIOLATION",
+                        "message": "Reporting timeframe concern identified for alleged neglect.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "neg_rec_1_a",
+              "prompt": "Was the reporting failure due to a lack of awareness of mandated reporting requirements?",
+              "node_type": "question",
+              "parent_node_code": "neg_rec_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": []
+            },
+            {
+              "code": "neg_rec_1_b",
+              "prompt": "Were there prior instances of reporting delays or failures at this facility?",
+              "node_type": "question",
+              "parent_node_code": "neg_rec_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "Yes",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "NEG_REC_PRIOR_FAILURES",
+                        "message": "Prior instances of reporting delays or failures identified at this facility.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "slug": "investigator",
+          "title": "Facility Investigator Interview",
+          "nodes": [
+            {
+              "code": "neg_inv_1",
+              "prompt": "Was a thorough investigation initiated and completed with appropriate documentation?",
+              "node_type": "question",
+              "parent_node_code": null,
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_citation",
+                      "payload": {
+                        "tag": "F610",
+                        "rationale": "Facility did not initiate/complete a thorough documented investigation."
+                      }
+                    },
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "NEG_INVESTIGATION_FAILURE",
+                        "message": "Investigation completeness/documentation concern identified.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "neg_inv_1_a",
+              "prompt": "Were key witnesses and relevant parties interviewed as part of the investigation?",
+              "node_type": "question",
+              "parent_node_code": "neg_inv_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "NEG_INV_WITNESSES_MISSED",
+                        "message": "Key witnesses and relevant parties were not interviewed.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "neg_inv_1_b",
+              "prompt": "Did the investigation include root cause analysis and identification of contributing factors?",
+              "node_type": "question",
+              "parent_node_code": "neg_inv_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "NEG_INV_NO_ROOT_CAUSE",
+                        "message": "Investigation did not include root cause analysis.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "slug": "supervision",
+          "title": "Supervisory Staff Interviews",
+          "nodes": [
+            {
+              "code": "neg_sup_1",
+              "prompt": "Were sufficient numbers of qualified staff deployed to meet resident needs?",
+              "node_type": "question",
+              "parent_node_code": null,
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_citation",
+                      "payload": {
+                        "tag": "F600",
+                        "rationale": "Staffing/supervision levels were insufficient to protect resident from neglect risk."
+                      }
+                    },
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "NEG_SYSTEMIC_PROTECTION_FAILURE",
+                        "message": "Potential systemic protection failure (F600/F606 indicator).",
+                        "severity": "high"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "neg_sup_1_a",
+              "prompt": "Were staffing levels below the facility's own staffing plan or regulatory minimums?",
+              "node_type": "question",
+              "parent_node_code": "neg_sup_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "Yes",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "NEG_SUP_BELOW_MINIMUM",
+                        "message": "Staffing levels below the facility's own staffing plan or regulatory minimums.",
+                        "severity": "high"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "neg_sup_1_b",
+              "prompt": "Were staff assignments appropriate for the acuity level of the affected residents?",
+              "node_type": "question",
+              "parent_node_code": "neg_sup_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "NEG_SUP_INAPPROPRIATE_ASSIGN",
+                        "message": "Staff assignments not appropriate for the acuity level of affected residents.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "slug": "qa",
+          "title": "Quality Assurance Interview",
+          "nodes": [
+            {
+              "code": "neg_qa_1",
+              "prompt": "Did the facility take corrective action and implement safeguards to prevent recurrence?",
+              "node_type": "question",
+              "parent_node_code": null,
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_citation",
+                      "payload": {
+                        "tag": "F943",
+                        "rationale": "Corrective action and safeguards were not effectively implemented to prevent recurrence."
+                      }
+                    },
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "NEG_SAFEGUARD_FAILURE",
+                        "message": "Safeguard/corrective action failure identified (F610/F943 indicator).",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "neg_qa_1_a",
+              "prompt": "Has the facility's Quality Assurance and Performance Improvement (QAPI) committee reviewed this issue?",
+              "node_type": "question",
+              "parent_node_code": "neg_qa_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "NEG_QA_NO_QAPI_REVIEW",
+                        "message": "QAPI committee has not reviewed this issue.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "neg_qa_1_b",
+              "prompt": "Were any interim protective measures put in place pending completion of corrective actions?",
+              "node_type": "question",
+              "parent_node_code": "neg_qa_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "NEG_QA_NO_INTERIM_MEASURES",
+                        "message": "No interim protective measures put in place pending corrective actions.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "infection-control-cep",
+      "title": "Infection Control Pathway",
+      "is_active": true,
+      "sections": [
+        {
+          "slug": "prevention",
+          "title": "Infection Prevention Practices",
+          "nodes": [
+            {
+              "code": "inf_prev_1",
+              "prompt": "Were infection prevention and control practices implemented according to facility policy?",
+              "node_type": "question",
+              "parent_node_code": null,
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "INF_PREVENTION_COMPLIANCE_FAILURE",
+                        "message": "Infection prevention practice compliance failure identified.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "inf_prev_1_a",
+              "prompt": "Were specific protocols (hand hygiene, PPE use, environmental cleaning) identified as deficient?",
+              "node_type": "question",
+              "parent_node_code": "inf_prev_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": []
+            },
+            {
+              "code": "inf_prev_1_b",
+              "prompt": "Did staff demonstrate knowledge of infection prevention policies during interviews?",
+              "node_type": "question",
+              "parent_node_code": "inf_prev_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "INF_PREV_KNOWLEDGE_GAP",
+                        "message": "Staff did not demonstrate knowledge of infection prevention policies.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "slug": "monitoring",
+          "title": "Monitoring & Surveillance",
+          "nodes": [
+            {
+              "code": "inf_mon_1",
+              "prompt": "Was the resident appropriately monitored and documented for signs and symptoms of infection?",
+              "node_type": "question",
+              "parent_node_code": null,
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "INF_MONITORING_DOC_FAILURE",
+                        "message": "Monitoring/documentation concern identified (potential F880).",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "inf_mon_1_a",
+              "prompt": "Was there a structured surveillance system in place for tracking infection indicators?",
+              "node_type": "question",
+              "parent_node_code": "inf_mon_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "INF_MON_NO_SURVEILLANCE",
+                        "message": "No structured surveillance system in place for tracking infection indicators.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "inf_mon_1_b",
+              "prompt": "Were observed signs or symptoms of infection communicated promptly to medical staff?",
+              "node_type": "question",
+              "parent_node_code": "inf_mon_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "INF_MON_NOT_COMMUNICATED",
+                        "message": "Signs or symptoms of infection not communicated promptly to medical staff.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "slug": "orders",
+          "title": "Physician Orders & Isolation Precautions",
+          "nodes": [
+            {
+              "code": "inf_ord_1",
+              "prompt": "Were physician orders and isolation precautions followed correctly?",
+              "node_type": "question",
+              "parent_node_code": null,
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "INF_ORDERS_ISOLATION_FAILURE",
+                        "message": "Physician orders/isolation precaution concern identified (potential F880/F684).",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "inf_ord_1_a",
+              "prompt": "Were isolation precaution signs posted and transmission-based precautions clearly communicated to all staff?",
+              "node_type": "question",
+              "parent_node_code": "inf_ord_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": []
+            },
+            {
+              "code": "inf_ord_1_b",
+              "prompt": "Were there delays in obtaining or implementing physician orders for infection treatment?",
+              "node_type": "question",
+              "parent_node_code": "inf_ord_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": []
+            }
+          ]
+        },
+        {
+          "slug": "harm",
+          "title": "Harm / Transmission Evaluation",
+          "nodes": [
+            {
+              "code": "inf_harm_1",
+              "prompt": "Did the infection control failure result in resident harm or spread of infection?",
+              "node_type": "question",
+              "parent_node_code": null,
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "Yes",
+                  "actions": [
+                    {
+                      "type": "recommend_pathway",
+                      "payload": {
+                        "message": "Infection failure with harm/spread identified. Recommend General CEP or Neglect CEP for systemic review.",
+                        "pathway_slug": "general-cep"
+                      }
+                    },
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "INF_HARM_ESCALATION",
+                        "message": "Infection harm/spread escalation identified.",
+                        "severity": "high"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "INF_HARM_BANNER",
+                        "message": "Compliance failure noted without confirmed harm. Escalation banner displayed.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "inf_harm_1_a",
+              "prompt": "Were any containment measures effective in preventing further transmission?",
+              "node_type": "question",
+              "parent_node_code": "inf_harm_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": []
+            },
+            {
+              "code": "inf_harm_1_b",
+              "prompt": "Is there an ongoing risk of transmission if the identified failures are not corrected?",
+              "node_type": "question",
+              "parent_node_code": "inf_harm_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "Yes",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "INF_HARM_ONGOING_RISK",
+                        "message": "Ongoing risk of transmission if identified failures are not corrected.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "slug": "decisions",
+          "title": "Decision Summary",
+          "nodes": [
+            {
+              "code": "inf_dec_1",
+              "prompt": "Did the facility maintain an effective infection prevention and control program?",
+              "node_type": "decision",
+              "parent_node_code": null,
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_citation",
+                      "payload": {
+                        "tag": "F880",
+                        "rationale": "Facility did not maintain an effective infection prevention and control program."
+                      }
+                    },
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "INF_DECISION_FAILURE",
+                        "message": "Infection prevention/control program concern identified.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "inf_dec_1_a",
+              "prompt": "Does the facility have a designated Infection Preventionist with appropriate training and authority?",
+              "node_type": "question",
+              "parent_node_code": "inf_dec_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": [
+                {
+                  "when_choice": "No",
+                  "actions": [
+                    {
+                      "type": "add_flag",
+                      "payload": {
+                        "code": "INF_DEC_NO_IP",
+                        "message": "Facility does not have a designated Infection Preventionist with appropriate training.",
+                        "severity": "warn"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "code": "inf_dec_1_b",
+              "prompt": "Were antibiotic stewardship practices reviewed and found compliant with current guidelines?",
+              "node_type": "question",
+              "parent_node_code": "inf_dec_1",
+              "choices": [
+                "Yes",
+                "No"
+              ],
+              "rules": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "reset_runtime": false
+}

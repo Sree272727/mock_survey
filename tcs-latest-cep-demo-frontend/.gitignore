@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/*
+
+# Build outputs
+dist/
+
+# TypeScript/Vite cache
+*.tsbuildinfo
+.vite/
+
+# Local env
+.env
+.env.*
+
+# OS/editor files
+.DS_Store
+node_modules/.vite/deps/_metadata.json
